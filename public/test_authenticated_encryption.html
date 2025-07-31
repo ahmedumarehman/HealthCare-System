@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticated Encryption Security Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+
+        .test-section {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .error {
+            color: #ff6666;
+        }
+
+        .warning {
+            color: #ffaa00;
+        }
+
+        .critical {
+            color: #ff0000;
+            font-weight: bold;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .separator {
+            border-top: 2px solid #444;
+            margin: 20px 0;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔐 Authenticated Encryption Security Test</h1>
+    <p>This test verifies that our new AES-GCM implementation works like Python Fernet and ALWAYS fails with wrong
+        passwords.</p>
+
+    <button onclick="runSecurityTest()">🧪 Run Security Test</button>
+    <button onclick="clearResults()">🗑️ Clear Results</button>
+
+    <div id="results"></div>
+
+    <script>
+        // Web Crypto API for authenticated encryption (AES-GCM)
+        class AuthenticatedEncryption {
+            // Convert string to ArrayBuffer
+            stringToArrayBuffer(str) {
+                const encoder = new TextEncoder();
+                return encoder.encode(str);
+            }
+
+            // Convert ArrayBuffer to string
+            arrayBufferToString(buffer) {
+                const decoder = new TextDecoder();
+                return decoder.decode(buffer);
+            }
+
+            // Convert ArrayBuffer to base64
+            arrayBufferToBase64(buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binary);
+            }
+
+            // Convert base64 to ArrayBuffer
+            base64ToArrayBuffer(base64) {
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            // Derive key using PBKDF2
+            async deriveKey(password, salt) {
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    this.stringToArrayBuffer(password),
+                    { name: 'PBKDF2' },
+                    false,
+                    ['deriveKey']
+                );
+
+                return crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            // Authenticated encryption using AES-GCM (like Fernet)
+            async encrypt(data, password) {
+                // Generate random salt and IV
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const iv = crypto.getRandomValues(new Uint8Array(12)); // GCM uses 96-bit IV
+
+                // Derive key from password
+                const key = await this.deriveKey(password, salt.buffer);
+
+                // Convert data to ArrayBuffer
+                const dataBuffer = this.stringToArrayBuffer(data);
+
+                // Encrypt with AES-GCM (provides both confidentiality and authenticity)
+                const encryptedBuffer = await crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    dataBuffer
+                );
+
+                return {
+                    encrypted: this.arrayBufferToBase64(encryptedBuffer),
+                    salt: this.arrayBufferToBase64(salt.buffer),
+                    iv: this.arrayBufferToBase64(iv.buffer)
+                };
+            }
+
+            // Authenticated decryption using AES-GCM
+            async decrypt(encryptedData, password, salt, iv) {
+                try {
+                    // Convert base64 back to ArrayBuffers
+                    const saltBuffer = this.base64ToArrayBuffer(salt);
+                    const ivBuffer = this.base64ToArrayBuffer(iv);
+                    const encryptedBuffer = this.base64ToArrayBuffer(encryptedData);
+
+                    // Derive the same key from password and salt
+                    const key = await this.deriveKey(password, saltBuffer);
+
+                    // Decrypt with AES-GCM
+                    // This will automatically fail if the password is wrong or data is tampered with
+                    const decryptedBuffer = await crypto.subtle.decrypt(
+                        {
+                            name: 'AES-GCM',
+                            iv: new Uint8Array(ivBuffer)
+                        },
+                        key,
+                        encryptedBuffer
+                    );
+
+                    // Convert back to string
+                    return this.arrayBufferToString(decryptedBuffer);
+                } catch (error) {
+                    // AES-GCM will throw an error if password is wrong or data is corrupted
+                    throw new Error('Invalid password - authentication failed');
+                }
+            }
+        }
+
+        const authenticatedCrypto = new AuthenticatedEncryption();
+
+        function log(message, className = '') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = className;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function runSecurityTest() {
+            clearResults();
+
+            log('<div class="test-section">', '');
+            log('<h2>🧪 Testing Authenticated Encryption (AES-GCM) Security</h2>', '');
+
+            const testData = "This is super secret medical data that should NEVER decrypt with wrong passwords!";
+            const correctPassword = "mySecurePassword123!";
+            const wrongPasswords = [
+                "wrongPassword",
+                "mySecurePassword123",  // Missing !
+                "mySecurePassword123!!", // Extra !
+                "",
+                "123",
+                "completely different",
+                "MySecurePassword123!", // Wrong case
+                " mySecurePassword123!", // Extra space
+                "mySecurePassword123! " // Extra space at end
+            ];
+
+            try {
+                // Test encryption with correct password
+                log('🔒 Encrypting data with correct password...', 'warning');
+                const encrypted = await authenticatedCrypto.encrypt(testData, correctPassword);
+                log('✅ Encryption successful', 'success');
+                log(`📊 Encrypted data length: ${encrypted.encrypted.length}`, '');
+                log(`🧂 Salt: ${encrypted.salt.substring(0, 20)}...`, '');
+                log(`🔑 IV: ${encrypted.iv.substring(0, 20)}...`, '');
+                log('', '');
+
+                // Test decryption with CORRECT password
+                log('🔓 Testing decryption with CORRECT password...', 'warning');
+                try {
+                    const decrypted = await authenticatedCrypto.decrypt(
+                        encrypted.encrypted,
+                        correctPassword,
+                        encrypted.salt,
+                        encrypted.iv
+                    );
+
+                    if (decrypted === testData) {
+                        log('✅ CORRECT PASSWORD: Decryption successful and data matches!', 'success');
+                    } else {
+                        log('❌ CORRECT PASSWORD: Decryption successful but data doesn\'t match!', 'error');
+                        log(`Expected: "${testData}"`, '');
+                        log(`Got: "${decrypted}"`, '');
+                    }
+                } catch (error) {
+                    log('❌ CORRECT PASSWORD: Unexpected decryption failure!', 'error');
+                    log('Error: ' + error.message, '');
+                }
+
+                log('</div>', '');
+                log('<div class="separator"></div>', '');
+                log('<div class="test-section">', '');
+                log('<h2>🚨 CRITICAL SECURITY TEST: Testing with WRONG passwords</h2>', 'critical');
+                log('<p>(All of these should FAIL with authentication errors)</p>', 'warning');
+
+                let allWrongPasswordsFailed = true;
+                let testCount = 0;
+
+                // Test decryption with WRONG passwords
+                for (const wrongPassword of wrongPasswords) {
+                    testCount++;
+                    log(`<br>🔓 Test ${testCount}: Trying wrong password: "${wrongPassword}"`, 'warning');
+
+                    try {
+                        const result = await authenticatedCrypto.decrypt(
+                            encrypted.encrypted,
+                            wrongPassword,
+                            encrypted.salt,
+                            encrypted.iv
+                        );
+
+                        // THIS SHOULD NEVER HAPPEN!
+                        log('🚨🚨🚨 CRITICAL SECURITY BUG: Wrong password succeeded!', 'critical');
+                        log(`🚨 Decrypted result: "${result}"`, 'critical');
+                        log('🚨 This is a MAJOR security vulnerability!', 'critical');
+                        allWrongPasswordsFailed = false;
+                    } catch (error) {
+                        // This is the expected behavior
+                        log(`✅ SECURITY OK: Wrong password correctly failed with: ${error.message}`, 'success');
+                    }
+                }
+
+                log('</div>', '');
+                log('<div class="separator"></div>', '');
+                log('<div class="test-section">', '');
+                if (allWrongPasswordsFailed) {
+                    log('<h2>🎉 ALL SECURITY TESTS PASSED!</h2>', 'success');
+                    log('✅ Authenticated encryption is working correctly', 'success');
+                    log('✅ Wrong passwords ALWAYS fail (like Python Fernet)', 'success');
+                    log('✅ Only correct password succeeds', 'success');
+                    log('<br><strong>🔐 The security vulnerability has been FIXED!</strong>', 'success');
+                } else {
+                    log('<h2>🚨 SECURITY VULNERABILITY DETECTED!</h2>', 'critical');
+                    log('❌ Some wrong passwords were accepted', 'error');
+                    log('❌ This is a critical security flaw', 'error');
+                }
+                log('</div>', '');
+
+            } catch (error) {
+                log('❌ Test failed with error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,249 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom healthcare-themed styles */
+@layer components {
+    .healthcare-gradient {
+        @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100;
+    }
+
+    .security-badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+
+    .security-badge-success {
+        @apply security-badge bg-green-100 text-green-800;
+    }
+
+    .security-badge-warning {
+        @apply security-badge bg-yellow-100 text-yellow-800;
+    }
+
+    .security-badge-error {
+        @apply security-badge bg-red-100 text-red-800;
+    }
+
+    .healthcare-card {
+        @apply bg-white rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-200;
+    }
+
+    .healthcare-button-primary {
+        @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium;
+    }
+
+    .healthcare-button-secondary {
+        @apply px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 font-medium;
+    }
+
+    .healthcare-input {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+    }
+
+    .encryption-indicator {
+        @apply inline-flex items-center px-2 py-1 rounded text-xs font-bold uppercase tracking-wide;
+    }
+
+    .encryption-indicator-active {
+        @apply encryption-indicator bg-green-100 text-green-800;
+    }
+
+    .encryption-indicator-inactive {
+        @apply encryption-indicator bg-red-100 text-red-800;
+    }
+
+    .blockchain-connection {
+        @apply flex items-center space-x-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg;
+    }
+
+    .security-alert {
+        @apply p-4 rounded-lg border-l-4 bg-opacity-50;
+    }
+
+    .security-alert-critical {
+        @apply security-alert border-red-500 bg-red-50 text-red-700;
+    }
+
+    .security-alert-high {
+        @apply security-alert border-orange-500 bg-orange-50 text-orange-700;
+    }
+
+    .security-alert-medium {
+        @apply security-alert border-yellow-500 bg-yellow-50 text-yellow-700;
+    }
+
+    .security-alert-low {
+        @apply security-alert border-green-500 bg-green-50 text-green-700;
+    }
+}
+
+@layer utilities {
+    .text-gradient {
+        background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .shadow-glow {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .animate-security-pulse {
+        animation: security-pulse 2s ease-in-out infinite;
+    }
+}
+
+@keyframes security-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+/* Custom scrollbar for security logs */
+.security-logs::-webkit-scrollbar {
+    width: 6px;
+}
+
+.security-logs::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.security-logs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.security-logs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Healthcare-specific animations */
+@keyframes heartbeat {
+
+    0%,
+    50%,
+    100% {
+        transform: scale(1);
+    }
+
+    25%,
+    75% {
+        transform: scale(1.1);
+    }
+}
+
+.animate-heartbeat {
+    animation: heartbeat 2s ease-in-out infinite;
+}
+
+/* Biometric scanner effect */
+@keyframes scan {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+.biometric-scanner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    animation: scan 2s ease-in-out infinite;
+}
+
+/* Blockchain verification effect */
+@keyframes verify {
+    0% {
+        border-color: #d1d5db;
+    }
+
+    50% {
+        border-color: #10b981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+
+    100% {
+        border-color: #d1d5db;
+    }
+}
+
+.blockchain-verify {
+    animation: verify 3s ease-in-out infinite;
+}
+
+/* Responsive design helpers */
+@media (max-width: 640px) {
+    .healthcare-card {
+        @apply mx-2;
+    }
+
+    .healthcare-button-primary,
+    .healthcare-button-secondary {
+        @apply text-sm px-3 py-1.5;
+    }
+}
+
+/* Print styles for medical records */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .healthcare-card {
+        @apply shadow-none border border-gray-300;
+    }
+
+    .healthcare-gradient {
+        @apply bg-white;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .healthcare-card {
+        @apply border-2 border-gray-900;
+    }
+
+    .security-badge {
+        @apply border border-current;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+    .animate-security-pulse,
+    .animate-heartbeat,
+    .biometric-scanner::before,
+    .blockchain-verify {
+        animation: none;
+    }
+
+    .transition-colors,
+    .transition-shadow {
+        transition: none;
+    }
+}
