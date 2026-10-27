@@ -172,7 +172,6 @@ class EncryptionService {
     async decryptData(encryptedData: string, password: string, salt: string, iv: string): Promise<string> {
         try {
             console.log('🔓 Starting authenticated decryption...');
-            console.log(`🔍 Password: "${password}" (length: ${password.length})`);
 
             // Validate input
             if (!password || password.trim() === '') {
